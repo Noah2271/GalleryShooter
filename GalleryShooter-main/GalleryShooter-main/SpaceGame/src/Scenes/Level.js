@@ -27,6 +27,18 @@ class Level extends Phaser.Scene {
         my.sprite.background = this.add.tileSprite(0, 0, this.game.config.width, this.game.config.height, "background");            // create tile sprites using black.png starting at 0,0 to the width and height borders
         my.sprite.background.setOrigin(0,0);                                                                                        //https://docs.phaser.io/api-documentation/class/gameobjects-tilesprite
 
+        this.anims.create({
+            key: "explosion",
+            frames: [
+                { key: "explode1" },
+                { key: "explode2" },
+                { key: "explode3" },
+            ],
+            frameRate: 20,    // Note: case sensitive (thank you Ivy!)
+            repeat: 5,
+            hideOnComplete: true
+        });
+
         // Create the player related text and sprites
         my.sprite.ship = this.add.sprite(500, 100, "ship");
         my.sprite.ship.setScale(0.5);
