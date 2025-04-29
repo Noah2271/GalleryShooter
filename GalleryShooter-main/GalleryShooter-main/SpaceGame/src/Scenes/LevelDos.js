@@ -1,6 +1,6 @@
-class Level extends Phaser.Scene {
+class LevelDos extends Phaser.Scene {
     constructor() {
-        super("Level");
+        super("LevelDos");
         this.my = { sprite: {}, projectiles: [], enemies: []};
     }
 
@@ -31,16 +31,16 @@ class Level extends Phaser.Scene {
         my.sprite.ship = this.add.sprite(500, 100, "ship");
         my.sprite.ship.setScale(0.5);
 
-        my.scoreText = this.add.text(20, 20, "SCORE:" + my.score, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FFD700"});   // display player score
+        my.scoreText = this.add.text(20, 20, "SCOReE:" + my.score, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FFD700"});   // display player score
         my.healthText = this.add.text(my.sprite.ship.x - 80 , 20, "HEALTH:" + my.health, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});    // display player health
         my.waveText = this.add.text(this.game.config.width-200, 20, "WAVE:" + this.waveCount, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF2999"});    // display player health
         my.startText = this.add.text(this.game.config.width/3, this.game.config.height/2, "PRESS S TO START", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});    // display player health
-        my.lengthText= this.add.text(500, 500, "size: " + my.enemies.length);
         // Keyboard input
         my.AKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         my.DKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         my.RKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R); // R for Reset
         my.SKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S); // S for Start
+        my.MKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
         my.SPACEKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         // Array to track projectiles
@@ -48,17 +48,17 @@ class Level extends Phaser.Scene {
 
         // enemy spawn
         this.time.addEvent({
-            delay: 10000, callback: this.spawnEnemyRow,
+            delay: 15000, callback: this.spawnEnemyRow,
             callbackScope: this,
             loop: true
         });
 
-        this.time.addEvent({
-            delay: 5000,
-            callback: this.checkTracking,
-            callbackScope: this,
-            loop: true
-        });
+       // this.time.addEvent({
+         //   delay: 5000,
+          //  callback: this.checkTracking,
+        //    callbackScope: this,
+        //    loop: true
+     //   });
 
         this.time.addEvent({
             delay: 2000,
@@ -96,7 +96,7 @@ class Level extends Phaser.Scene {
         })
 
         this.time.addEvent({
-            delay: 1000,          // make it so after like, idk, 20 waves the game is able to be ended if all enemies are gone, stop spawning enemies after wave 20
+            delay: 5000,          // make it so after like, idk, 20 waves the game is able to be ended if all enemies are gone, stop spawning enemies after wave 20
             callback: this.endGame,
             callbackScope: this,
             loop: true
@@ -106,7 +106,7 @@ class Level extends Phaser.Scene {
     update() {
         // Game state processes and background
         let my = this.my;
-        my.lengthText.setText("size:" + my.enemies.length);                         // debugging
+        //my.lengthText.setText("size:" + my.enemies.length);                         // debugging
 
         if (Phaser.Input.Keyboard.JustDown(my.SKey)) {
             my.startText.destroy();
@@ -117,7 +117,11 @@ class Level extends Phaser.Scene {
             my.enemies = []                                 // Reset enemies so this condition doesn't break
             this.scene.restart();                           // Restart the Level scene when R pressed in endstate
         }
-        
+
+        if (Phaser.Input.Keyboard.JustDown(my.MKey) && this.gameEnded) {
+            this.scene.start("LoadOn");
+        }
+
         if(!this.gameStarted || this.gameEnded) {
             return;
         }
@@ -131,7 +135,7 @@ class Level extends Phaser.Scene {
         }
 
         my.projectiles = my.projectiles.filter(proj => {    // If projectile offscreen, remove it from the projectile array
-            if (proj.y < this.game.config.height) {
+            if (proj.y < this.game.config.height || proj.y > 0) {
                 return true;
             } else {
                 proj.destroy();
@@ -188,7 +192,7 @@ class Level extends Phaser.Scene {
                     let angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.my.sprite.ship.x, this.my.sprite.ship.y);  
                     enemy.rotation = angle + Phaser.Math.DegToRad(90);                      // If on the curve, then rotate enemy towards the player.
                 }                                                                           // If enemy type II, constantly rotate towrads player and fire in their direction.
-            if (enemy.direction == "left" && enemy.y < this.game.config.height - 100){                                                                                                                       // Direction change to bounce off boundaries for enemies
+            if (enemy.direction == "left" && enemy.y < this.game.config.height - 100){      // Direction change to bounce off boundaries for enemies
                 enemy.x -= 0.9;
                 }
             if (enemy.direction == "right" && enemy.y < this.game.config.height - 100){
@@ -205,11 +209,22 @@ class Level extends Phaser.Scene {
                     proj.destroy();            
                     my.score += 100;
                     my.scoreText.setText("SCORE:" + my.score);
+                    this.sound.play("death", {
+                        volume: 1   // Can adjust volume using this, goes from 0 to 1
+                    });
+                    this.boom = this.add.sprite(enemy.x, enemy.y, "explode1").setScale(0.25).play("explosion");
                 }
                 if (proj.active && my.sprite.ship.active && Phaser.Geom.Intersects.RectangleToRectangle(proj.getBounds(), my.sprite.ship.getBounds()) && proj.isEnemyProjectile) {
                     my.health -= 1;                                                         // if player hit by enemy projectile, decrement health and update health text.
                     my.healthText.setText("HEALTH:" + my.health);
+                    this.sound.play("death", {
+                        volume: 1   // Can adjust volume using this, goes from 0 to 1
+                    });
                     proj.destroy();
+                    if(my.health == 0){
+                        my.sprite.ship.destroy();
+                        this.boom = this.add.sprite(my.sprite.ship.x, my.sprite.ship.y, "explode1").setScale(0.25).play("explosion");
+                    }
                 }                                                                           // both instances remove the projectile.
             }
         }
@@ -256,6 +271,7 @@ endChecker() {
         my.endText = this.add.text(this.game.config.width/3, this.game.config.height/2, "GAME OVER", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.finalScoreText = this.add.text(this.game.config.width/3, (this.game.config.height/2) +30, "FINAL SCORE: " + my.score, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.resetText = this.add.text(this.game.config.width/3, (this.game.config.height/2) +60, "PRESS R TO RESET", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
+        my.returnText = this.add.text(this.game.config.width/3, (this.game.config.height/2) +90, "PRESS M FOR TITLE MENU", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
     }
 }
 
@@ -268,6 +284,7 @@ endGame() {
         my.endText = this.add.text(this.game.config.width/3, this.game.config.height/2, "GAME OVER", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.finalScoreText = this.add.text(this.game.config.width/3, (this.game.config.height/2) + 30, "FINAL SCORE: " + my.score, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.resetText = this.add.text(this.game.config.width/3, (this.game.config.height/2) + 60, "PRESS R TO RESET", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
+        my.returnText = this.add.text(this.game.config.width/3, (this.game.config.height/2) +90, "PRESS M FOR TITLE MENU", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
     }
 }
 
@@ -278,7 +295,8 @@ spawnEnemyRow() {
     let startY = this.game.config.height + 0;                                                                   // at bottom bounds, spawn 5-8 enemies with spacing of 100 pixels between
     let spacing = 100;
     let startX = 200;
-    for (let i = 0; i < Phaser.Math.Between(5,8); i++) {                                                        
+    let enemyCount = Phaser.Math.Between(10,14)
+    for (let i = 0; i < enemyCount/2; i++) {                                                        
         if((Math.random() < 0.8) && this.gameStarted && !this.gameEnded && !(this.waveCount == 10)){            // 20% of enemies in the line will be type II, the other 80% type I
             let enemy = this.add.sprite(startX + i * spacing, startY, "enemy1");                                // creating of enemy type 1
             enemy.setScale(0.5);
@@ -302,8 +320,33 @@ spawnEnemyRow() {
             enemy.type = 2;                                                                                                                                            
             my.enemies.push(enemy);
         }                                                                                                       // push to enemies array
-    }
-    if(this.waveCount != 10 && !this.gameEnded){                                                                                   // increment waveCount until desired wave limit for the level
+}
+    for (let i = 0; i < enemyCount/2; i++) {                                                        
+        if((Math.random() < 0.8) && this.gameStarted && !this.gameEnded && !(this.waveCount == 10)){            // 20% of enemies in the line will be type II, the other 80% type I
+            let enemy = this.add.sprite(startX + i * spacing+20, startY+50, "enemy1");                                // creating of enemy type 1
+            enemy.setScale(0.5);
+            if(Math.random() < 0.5){                                                                            // randomize enemy direction which the line splits into after y position specified in update()
+                enemy.direction = "left";   
+            } else {
+                enemy.direction = "right";
+            }
+            enemy.isFollowing = false;                                                                          // flag for if the enemy is on the curve
+            enemy.type = 1;                                                                                     // flag enemy type for different characteristics
+            my.enemies.push(enemy);
+        } else if (this.gameStarted && !this.gameEnded && !(this.waveCount == 10)) {                            // creating of enemy type 2
+            let enemy = this.add.sprite(startX + i * spacing+20, startY+50, "enemy2");
+            enemy.setScale(0.5);
+            if(Math.random() < 0.5){
+                enemy.direction = "left";   
+            } else {
+                enemy.direction = "right";
+            }
+            enemy.isFollowing = false;
+            enemy.type = 2;                                                                                                                                            
+            my.enemies.push(enemy);
+        }
+    }      
+    if(this.waveCount != 10 && !this.gameEnded){                                                                // increment waveCount until desired wave limit for the level
     this.waveCount += 1;
     my.waveText.setText("WAVE: " + this.waveCount); 
     }  
@@ -316,7 +359,7 @@ checkTracking() {
     for (let enemy of my.enemies) {                                                                             // iterate through all enemies on screen. If game still going and enemy not
         if (!enemy.isFollowing && enemy.active && this.gameStarted && !this.gameEnded) {                        // currently following, then 20% chance of calling startTrackingEnemy()
             // 30% chance to start tracking
-            if (Math.random() < 0.2 && enemy.y > 400 && enemy.type === 1) {
+            if (Math.random() < 0.1 && enemy.y > 400 && enemy.type === 1) {
                 this.startTrackingEnemy(enemy);                                                                 // do not allow enemy to get on the curve if it is too close to the player or it would be impossible to dodge
             }
         }
@@ -352,7 +395,7 @@ startTrackingEnemy(enemy) {
             from: 0,
             to: 1,
             delay: 0,
-            duration: 4000,
+            duration: 10000,
             ease: 'Sine.easeInOut',
             repeat: 0,
             yoyo: false,
@@ -373,7 +416,7 @@ enemyShootCheck() {
 
     for (let enemy of my.enemies) {                                                                             // if enemy is not too close to player, 50% chance to call shoot function
         if(enemy.active && enemy.y > this.game.config.height/3) {
-            if (Math.random() < 0.5) {
+            if (Math.random() < 0.2) {
                 this.enemyShoot(enemy);
                 }
             }
@@ -386,12 +429,12 @@ enemyTrackingShoot() {                                                          
 
     for(let enemy of my.enemies){
         if(enemy.active && enemy.isFollowing && enemy.y > this.game.config.height/3) {
-            if (Math.random() < 0.5) {
+            if (Math.random() < 0.1) {
                 this.enemyShoot(enemy);
                 }
             }
             if(enemy.active && enemy.type === 2 && enemy.y > this.game.config.height/3) {
-                if (Math.random() < 0.10) {
+                if (Math.random() < 0.0005) {
                     this.enemyShoot(enemy);
             }
         }
@@ -408,8 +451,9 @@ enemyShoot(enemy) {                                                             
     
         if (enemy.isFollowing || enemy.type === 2) {                                                            // if enemy type 2 or following, calculate angle to shoot DIRECTLY at the player
             const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, my.sprite.ship.x, my.sprite.ship.y);                                                              
-            proj.velocityX = Math.cos(angle) * 5;
-            proj.velocityY = Math.sin(angle) * 5;
+            proj.velocityX = Math.cos(angle) * 5/3;
+            proj.velocityY = Math.sin(angle) * 5/3;
+
         } else {                                                                                                
             proj.velocityX = 0;                                                                                 // else shoot straight
             proj.velocityY = -8;
