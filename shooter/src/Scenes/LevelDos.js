@@ -374,7 +374,7 @@ enemyShoot(enemy) {
         let my = this.my;
 
     if(this.gameStarted && !this.gameEnded){
-        if (enemy.type === 2) {                                                 // TYPE 2: calculate the angle in order to shoot AT the player
+        if (enemy.type === 2 && enemy.y > this.game.config.height/3) {                                                 // TYPE 2: calculate the angle in order to shoot AT the player
             const baseAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, my.sprite.ship.x, my.sprite.ship.y);
     
             const angleOffsets = [-0.3, 0, 0.3];                                // array of bullet offsets for the three bullet spread, first one should offset it a bit to the left, then no offset, then offset a bit to the right
