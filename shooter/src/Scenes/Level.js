@@ -6,11 +6,7 @@ class Level extends Phaser.Scene {
 
     preload() {
         this.load.setPath("./assets/");
-        this.load.image("ship", "enemyGreen1.png");
-        this.load.image("projectile", "numeralX.png");
-        this.load.image("background", "black.png");
-        this.load.image("enemy1", "playerShip2_red.png");
-        this.load.image("enemy2", "playerShip1_red.png");
+        this.load.audio("click", "click.mp3");
     }
 
     create() {
@@ -34,19 +30,21 @@ class Level extends Phaser.Scene {
                 { key: "explode2" },
                 { key: "explode3" },
             ],
-            frameRate: 20,    // Note: case sensitive (thank you Ivy!)
+            frameRate: 20,    
             repeat: 5,
             hideOnComplete: true
         });
 
-        // Create the player related text and sprites
+        // create player sprites
         my.sprite.ship = this.add.sprite(500, 100, "ship");
         my.sprite.ship.setScale(0.5);
-
-        my.scoreText = this.add.text(20, 20, "SCORE:" + my.score, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FFD700"});   // display player score
-        my.healthText = this.add.text(my.sprite.ship.x - 80 , 20, "HEALTH:" + my.health, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});    // display player health
-        my.waveText = this.add.text(this.game.config.width-200, 20, "WAVE:" + this.waveCount, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF2999"});    // display player health
-        my.startText = this.add.text(this.game.config.width/3, this.game.config.height/2, "PRESS S TO START", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});    // display player health
+        
+        // player stat displays
+        my.scoreText = this.add.text(20, 20, "SCORE:" + my.score, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FFD700"});   
+        my.healthText = this.add.text(my.sprite.ship.x - 80 , 20, "HEALTH:" + my.health, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});    
+        my.waveText = this.add.text(this.game.config.width-200, 20, "WAVE:" + this.waveCount, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF2999"});    
+        my.startText = this.add.text(this.game.config.width/3, this.game.config.height/2, "PRESS S TO START", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});    
+        
         // Keyboard input
         my.AKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         my.DKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
@@ -54,9 +52,6 @@ class Level extends Phaser.Scene {
         my.SKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S); // S for Start
         my.MKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
         my.SPACEKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        // Array to track projectiles
-        my.projectiles = [];
 
         // enemy spawn
         this.time.addEvent({
@@ -108,7 +103,7 @@ class Level extends Phaser.Scene {
         })
 
         this.time.addEvent({
-            delay: 1000,          // make it so after like, idk, 20 waves the game is able to be ended if all enemies are gone, stop spawning enemies after wave 20
+            delay: 1000,          
             callback: this.endGame,
             callbackScope: this,
             loop: true
@@ -116,21 +111,28 @@ class Level extends Phaser.Scene {
     }
 
     update() {
-        // Game state processes and background
         let my = this.my;
-        //my.lengthText.setText("size:" + my.enemies.length);                         // debugging
 
         if (Phaser.Input.Keyboard.JustDown(my.SKey)) {
             my.startText.destroy();
             this.startGame();
+            if (!my.once){
+                my.Warning = this.add.text(this.game.config.width/3, this.game.config.height/2, "SPAWNING ENEMIES: PLEASE WAIT...", {fontFamily: "Silkscreen", fontSize: "20px", fill: "#FF0000"}); 
+                my.once = true;
+            }
         }
         
         if (Phaser.Input.Keyboard.JustDown(my.RKey) && this.gameEnded) {
             my.enemies = []                                 // Reset enemies so this condition doesn't break
+            my.once = false;
             this.scene.restart();                           // Restart the Level scene when R pressed in endstate
         }
 
         if (Phaser.Input.Keyboard.JustDown(my.MKey) && this.gameEnded) {
+            this.sound.play("click", {
+                volume: 0.3   
+            });
+            my.once = false;
             this.scene.start("LoadOn");
         }
 
@@ -142,8 +144,16 @@ class Level extends Phaser.Scene {
 
         // Player controls
         if (Phaser.Input.Keyboard.JustDown(my.SPACEKey)) {
-            const proj = this.add.sprite(my.sprite.ship.x, my.sprite.ship.y, "projectile");
+            const proj = this.add.sprite(my.sprite.ship.x, my.sprite.ship.y, "playerprojectile");
+            proj.setScale(0.1);
             my.projectiles.push(proj);
+            if(my.score !== 0){
+            my.score -= 5;
+            my.scoreText.setText("SCORE:" + my.score);
+            }
+            this.sound.play("regularfire", {
+                volume: 0.3   
+            });
         }
 
         my.projectiles = my.projectiles.filter(proj => {    // If projectile offscreen, remove it from the projectile array
@@ -222,7 +232,7 @@ class Level extends Phaser.Scene {
                     my.score += 100;
                     my.scoreText.setText("SCORE:" + my.score);
                     this.sound.play("death", {
-                        volume: 1   // Can adjust volume using this, goes from 0 to 1
+                        volume: 0.3   // Can adjust volume using this, goes from 0 to 1
                     });
                     this.boom = this.add.sprite(enemy.x, enemy.y, "explode1").setScale(0.25).play("explosion");
                 }
@@ -230,7 +240,7 @@ class Level extends Phaser.Scene {
                     my.health -= 1;                                                         // if player hit by enemy projectile, decrement health and update health text.
                     my.healthText.setText("HEALTH:" + my.health);
                     this.sound.play("death", {
-                        volume: 1   // Can adjust volume using this, goes from 0 to 1
+                        volume: 0.3   // Can adjust volume using this, goes from 0 to 1
                     });
                     proj.destroy();
                     if(my.health == 0){
@@ -242,7 +252,7 @@ class Level extends Phaser.Scene {
         }
 
         my.enemies = my.enemies.filter(enemy => {                                           // if enemy is hit or past the player, remove from array and destroy the sprite                                   
-            if (enemy.hit || enemy.y < 0) {
+            if (enemy.hit || !enemy.active ||  enemy.y < 0) {
                 enemy.destroy();
                 return false;
             }
@@ -278,32 +288,48 @@ blinkerOn() {
 // functions for if player health is 0 or enemies are all defeated or out of screen, display player info and flag as gameEnded to unlock the R key to restart the scene.
 endChecker() {
     let my = this.my
-    if(my.health <= 0){
+    if(my.health <= 0 && !this.gameEnded){
         this.gameEnded = true;
         my.endText = this.add.text(this.game.config.width/3, this.game.config.height/2, "GAME OVER", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.finalScoreText = this.add.text(this.game.config.width/3, (this.game.config.height/2) +30, "FINAL SCORE: " + my.score, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.resetText = this.add.text(this.game.config.width/3, (this.game.config.height/2) +60, "PRESS R TO RESET", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.returnText = this.add.text(this.game.config.width/3, (this.game.config.height/2) +90, "PRESS M FOR TITLE MENU", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
+
+        let storedScore = localStorage.getItem("highscore_Level");
+
+        if (storedScore === null || my.score > parseInt(storedScore)) {                                      // compare my.score to stored score, if no stored score, then story my.score
+            // Save the new high score                                                                       // https://rexrainbow.github.io/phaser3-rex-notes/docs/site/localstorage/
+            localStorage.setItem("highscore_Level", my.score);
+        }
     }
 }
 
 endGame() {
     let my = this.my
 
-    if (this.waveCount == 10 && my.enemies.length === 0){
+    if (this.waveCount == 10 && my.enemies.length === 0 && !this.gameEnded){
         this.gameEnded = true;
         my.winText = this.add.text(150, (this.game.config.height/2) - 30, "YOU HAVE SUCCESSFULLY SURVIVED THE RED FLEET", {fontFamily: "Silkscreen", fontSize: "20px", fill: "#7CFC00"});
         my.endText = this.add.text(this.game.config.width/3, this.game.config.height/2, "GAME OVER", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.finalScoreText = this.add.text(this.game.config.width/3, (this.game.config.height/2) + 30, "FINAL SCORE: " + my.score, {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.resetText = this.add.text(this.game.config.width/3, (this.game.config.height/2) + 60, "PRESS R TO RESET", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
         my.returnText = this.add.text(this.game.config.width/3, (this.game.config.height/2) +90, "PRESS M FOR TITLE MENU", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});
+        
+        let storedScore = localStorage.getItem("highscore_Level");
+
+        if (storedScore === null || my.score > parseInt(storedScore)) {                                     // compare my.score to stored score, if no stored score, then story my.score
+            // Save the new high score
+            localStorage.setItem("highscore_Level", my.score);
+        }
     }
 }
 
 // function to spawn lines of enemies
 spawnEnemyRow() {
     let my = this.my;                                                                                   
-
+    if (my.Warning.active){
+        my.Warning.destroy();
+        }
     let startY = this.game.config.height + 0;                                                                   // at bottom bounds, spawn 5-8 enemies with spacing of 100 pixels between
     let spacing = 100;
     let startX = 200;

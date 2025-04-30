@@ -7,14 +7,21 @@ class LoadOn extends Phaser.Scene {
     preload() {
         this.load.setPath("./assets/");
         this.load.image("ship", "enemyGreen1.png");
-        this.load.image("projectile", "numeralX.png");
-        this.load.image("background", "black.png");
         this.load.image("enemy1", "playerShip2_red.png");
         this.load.image("enemy2", "playerShip1_red.png");
+        this.load.image("enemy3", "enemyBlue2.png");
+        this.load.image("enemy4", "enemyBlue3.png");
+        this.load.image("enemy5", "enemyBlue4.png");
+        this.load.image("projectile", "numeralX.png");
+        this.load.image("background", "black.png");
         this.load.image("explode1", "scorch_01.png");
         this.load.image("explode2", "scorch_02.png");
         this.load.image("explode3", "scorch_03.png");
         this.load.audio("death", "explosionCrunch_000.ogg");
+        this.load.audio("regularfire", "laserSmall_001.ogg");
+        this.load.audio("click", "confirmation_004.ogg")
+        this.load.image("specialprojectile", "light_03.png");
+        this.load.image("playerprojectile", "trace_06.png");
     }
 
 create() {
@@ -44,9 +51,19 @@ create() {
     my.sprite.ship = this.add.sprite(500, 100, "ship");
     my.sprite.ship.setScale(0.5);
 
-    my.startText = this.add.text((this.game.config.width/3) - 140, this.game.config.height/2, "PRESS 1: LEVEL ONE: RED FLEET", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});    // display player health
+    my.startText1 = this.add.text((this.game.config.width/3) - 140, this.game.config.height/3, "GALAXY SHOOTER!", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FFFF00"});    // display player health
+    my.startText2 = this.add.text((this.game.config.width/3) - 140, this.game.config.height/2, "PRESS 1: LEVEL ONE: RED FLEET", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FF0000"});    // display player health
+    my.startText3 = this.add.text((this.game.config.width/3) - 140, (this.game.config.height/2)+40, "PRESS 2: LEVEL TWO: BLUE FLEET", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#ADD8E6"});    // display player health
+    my.startText5 = this.add.text((this.game.config.width/3) - 140, (this.game.config.height/2)+120, "Press T: CONTROLS TUTORIAL", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FFFF00"});
+    my.startText6 = this.add.text((this.game.config.width/3) - 140, (this.game.config.height/2)+160, "Press H: HIGHSCORES", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FFFF00"});  
+    my.startText7 = this.add.text((this.game.config.width/3) - 140, (this.game.config.height/2)+200, "Press C: CREDITS", {fontFamily: "Silkscreen", fontSize: "35px", fill: "#FFFF00"});  
     // Keyboard input
     my.oneKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
+    my.twoKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
+    my.tKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
+    my.cKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
+    my.hKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H);
+
 
     // Array to track projectiles
     my.projectiles = [];
@@ -90,8 +107,42 @@ create() {
         let my = this.my;
 
         if (Phaser.Input.Keyboard.JustDown(my.oneKey)) {
+            this.sound.play("click", {
+                volume: 0.3   // Can adjust volume using this, goes from 0 to 1
+            });
             this.scene.start("Level");
         }
+
+        if(Phaser.Input.Keyboard.JustDown(my.twoKey)) {
+            this.sound.play("click", {
+                volume: 0.3   // Can adjust volume using this, goes from 0 to 1
+            });
+            this.scene.start("LevelDos");
+        }
+
+        if(Phaser.Input.Keyboard.JustDown(my.tKey)) {
+            this.sound.play("click", {
+                volume: 0.3   // Can adjust volume using this, goes from 0 to 1
+            });
+            this.scene.start("ControlOne");
+        }
+
+        if(Phaser.Input.Keyboard.JustDown(my.cKey)) {
+            this.sound.play("click", {
+                volume: 0.3   // Can adjust volume using this, goes from 0 to 1
+            });
+            this.scene.start("Credits");
+        }
+
+        if(Phaser.Input.Keyboard.JustDown(my.hKey)) {
+            this.sound.play("click", {
+                volume: 0.3   // Can adjust volume using this, goes from 0 to 1
+            });
+            this.scene.start("HighScore");
+        }
+
+
+
         //background movement
         my.sprite.background.tilePositionY += 1;
 
@@ -226,7 +277,7 @@ create() {
                 if (proj.active && enemy.active && Phaser.Geom.Intersects.RectangleToRectangle(proj.getBounds(), enemy.getBounds()) && !proj.isEnemyProjectile) {
                     this.boom = this.add.sprite(enemy.x, enemy.y, "explode1").setScale(0.25).play("explosion");
                     this.sound.play("death", {
-                        volume: 1   // Can adjust volume using this, goes from 0 to 1
+                        volume: 0.3   // Can adjust volume using this, goes from 0 to 1
                     });
                     enemy.hit = true;          
                     proj.destroy();            
@@ -234,7 +285,7 @@ create() {
                 if (proj.active && my.sprite.ship.active && Phaser.Geom.Intersects.RectangleToRectangle(proj.getBounds(), my.sprite.ship.getBounds()) && proj.isEnemyProjectile) {
                     proj.destroy();
                     this.sound.play("death", {
-                        volume: 1   // Can adjust volume using this, goes from 0 to 1
+                        volume: 0.3   // Can adjust volume using this, goes from 0 to 1
                     });
                 }                                                                           // both instances remove the projectile.
             }
@@ -252,12 +303,15 @@ create() {
     titlePlayerShoot() { 
         let my = this.my;
     
-        const proj = this.add.sprite(my.sprite.ship.x, my.sprite.ship.y, "projectile");                      // create projectile
-        proj.setScale(1);
+        const proj = this.add.sprite(my.sprite.ship.x, my.sprite.ship.y, "playerprojectile");                      // create projectile
+        proj.setScale(0.1);
         proj.isEnemyProjectile = false;                                                                                              
         proj.velocityX = 0;                                                                                 // else shoot straight
         proj.velocityY = 8;
-        my.projectiles.push(proj);    
+        my.projectiles.push(proj);
+        this.sound.play("regularfire", {
+            volume: 0.3   // Can adjust volume using this, goes from 0 to 1
+        });    
         }
      
     enemyShoot(enemy) {                                                                                              // create projectile flagged as an enemis, if on curve calculate trajectory of the bullet to current player position using phaser math
