@@ -38,9 +38,7 @@ class LevelDos extends Phaser.Scene {
         my.RKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R); // R for Reset
         my.SKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S); // S for Start
         my.MKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
-        my.SPACEKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        my.debugText = this.add.text(70,70, "size:" + my.enemies.length);                                                                                                           // debug enemy counter                                                                                                                   
+        my.SPACEKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);                                                                                                           
 
         // enemy handling events
         this.time.addEvent({
@@ -90,8 +88,6 @@ class LevelDos extends Phaser.Scene {
     update() {
         let my = this.my;
         my.sprite.background.tilePositionY += 1;            // scroll the background
-
-        my.debugText.setText("size:" + my.enemies.length)   // debug
         
         // Game state controls
         if (Phaser.Input.Keyboard.JustDown(my.SKey)) {
