@@ -219,7 +219,7 @@ class Level extends Phaser.Scene {
                 }
             if (enemy.direction == "right" && enemy.y < this.game.config.height - 100){
                 enemy.x += 0.9;
-                }
+                }                                                                           
             }
         }
         
@@ -227,7 +227,7 @@ class Level extends Phaser.Scene {
         for (let proj of my.projectiles) {                                                  // Iterate through projectiles and enemies. If enemy is hit by player projectile destroy sprite
             for (let enemy of my.enemies) {                                                 // mark as hit, and then add to score before setting it.
                 if (proj.active && enemy.active && Phaser.Geom.Intersects.RectangleToRectangle(proj.getBounds(), enemy.getBounds()) && !proj.isEnemyProjectile) {
-                    enemy.hit = true;          
+                    enemy.hit = true;                                                       // https://docs.phaser.io/phaser/concepts/geometry
                     proj.destroy();            
                     my.score += 100;
                     my.scoreText.setText("SCORE:" + my.score);

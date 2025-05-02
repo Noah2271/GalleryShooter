@@ -60,6 +60,8 @@ class ControlThree extends Phaser.Scene {
         }
         if(my.complete == true){
             if (Phaser.Input.Keyboard.JustDown(my.MKey)) {
+                my.complete = false;
+                my.once = false;
                 this.sound.play("click", {
                     volume: 0.3   
                 });
